@@ -4,8 +4,8 @@ import tensorflow as tf
 from PIL import Image, ImageDraw
 
 # # Load your trained meta-model
-# MODEL_PATH = "path_to_your_model/final_meta_model.keras"  # Replace with your model path
-# model = tf.keras.models.load_model(MODEL_PATH)
+MODEL_PATH = "https://drive.google.com/file/d/1EnokggrC6ymrSibtj2t7IHWb9QVtrehS/view?usp=drive_link"  # Replace with your model path
+model = tf.keras.models.load_model(MODEL_PATH)
 
 # Set page configuration
 st.set_page_config(page_title="Yellow Rust Disease Classification", layout="wide", initial_sidebar_state="expanded")
