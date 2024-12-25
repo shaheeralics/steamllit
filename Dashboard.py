@@ -19,7 +19,7 @@ def download_model_from_drive(file_id, output_path):
         st.error(f"Error downloading model: {e}")
 
 # Define Google Drive file ID and local model path
-file_id = "YOUR_FILE_ID"  # Replace with your Google Drive file ID
+file_id = "1EnokggrC6ymrSibtj2t7IHWb9QVtrehS"  # Replace with your Google Drive file ID
 model_path = "my_model.keras"
 
 # Streamlit app
