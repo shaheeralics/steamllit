@@ -7,6 +7,11 @@ import streamlit as st
 import gdown
 from tensorflow.keras.models import load_model
 import os
+st.set_page_config(
+    page_title="Yellow Rust Disease Classification",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 # Function to download the model
 def download_model_from_drive(file_id, output_path):
