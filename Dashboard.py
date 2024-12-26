@@ -2,11 +2,11 @@ import streamlit as st
 import numpy as np
 import tensorflow as tf
 from PIL import Image, ImageDraw
-
-import streamlit as st
 import gdown
 from tensorflow.keras.models import load_model
 import os
+
+# Set page configuration (must be the first Streamlit command)
 st.set_page_config(
     page_title="Yellow Rust Disease Classification",
     layout="wide",
@@ -45,11 +45,6 @@ if os.path.exists(model_path):
         st.error(f"Error loading model: {e}")
 else:
     st.error("Model file not found.")
-
-# Add application-specific functionality here
-
-# Set page configuration
-st.set_page_config(page_title="Yellow Rust Disease Classification", layout="wide", initial_sidebar_state="expanded")
 
 # Theme selection
 st.sidebar.title("Settings and Preferences")
