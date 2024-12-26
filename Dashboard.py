@@ -1,50 +1,17 @@
 import streamlit as st
 import numpy as np
-import tensorflow as tf
+import requests
 from PIL import Image, ImageDraw
-import gdown
-from tensorflow.keras.models import load_model
-import os
 
-# Set page configuration (must be the first Streamlit command)
+# Set page configuration
 st.set_page_config(
     page_title="Yellow Rust Disease Classification",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Function to download the model
-def download_model_from_drive(file_id, output_path):
-    try:
-        if not os.path.exists(output_path):
-            gdown.download(f"https://drive.google.com/uc?id={file_id}", output_path, quiet=False)
-        else:
-            st.info("Model already downloaded.")
-    except Exception as e:
-        st.error(f"Error downloading model: {e}")
-
-# Define Google Drive file ID and local model path
-file_id = "1EnokggrC6ymrSibtj2t7IHWb9QVtrehS"  # Replace with your Google Drive file ID
-model_path = "my_model.keras"
-
-# Streamlit app
-st.title("Streamlit App with Pretrained Model")
-
-# Download model from Google Drive
-st.write("Downloading model from Google Drive...")
-download_model_from_drive(file_id, model_path)
-
-# Load the model
-if os.path.exists(model_path):
-    st.write("Loading model...")
-    try:
-        model = load_model(model_path, compile=False)
-        st.success("Model loaded successfully!")
-        st.write(model.summary())
-    except Exception as e:
-        st.error(f"Error loading model: {e}")
-else:
-    st.error("Model file not found.")
+# Define the SageMaker endpoint URL
+ENDPOINT_URL = "https://<your-endpoint-name>.sagemaker.<region>.amazonaws.com"  # Replace with your endpoint details
 
 # Theme selection
 st.sidebar.title("Settings and Preferences")
@@ -67,49 +34,59 @@ if image_file:
     image = Image.open(image_file)
     st.image(image, caption="Uploaded Image", use_column_width=True)
 
-    # Preprocess the image for prediction
+    # Preprocess the image for SageMaker
     def preprocess_image(img):
         img = img.resize((224, 224))  # Adjust to model input size
         img_array = np.array(img) / 255.0  # Normalize
-        return np.expand_dims(img_array, axis=0)  # Add batch dimension
+        return np.expand_dims(img_array, axis=0).tolist()  # Add batch dimension and convert to list
 
     processed_image = preprocess_image(image)
 
-    # Prediction Results
-    predictions = model.predict(processed_image)
-    class_names = ["0", "MR", "MRMS", "MS", "R", "S"]  # Replace with actual class labels from dataset
-    predicted_class = class_names[np.argmax(predictions)]
-    confidence = np.max(predictions) * 100
+    # Send request to SageMaker endpoint
+    st.write("Sending image to the SageMaker endpoint for prediction...")
+    headers = {"Content-Type": "application/json"}
+    payload = {"instances": processed_image}  # Adjust payload format based on your model requirements
 
-    st.header("Prediction Results")
-    st.write(f"**Predicted Status:** {predicted_class}")
-    st.write(f"**Confidence Level:** {confidence:.2f}%")
+    try:
+        response = requests.post(ENDPOINT_URL, json=payload, headers=headers)
+        predictions = response.json()["predictions"][0]  # Extract predictions from the response
+        class_names = ["0", "MR", "MRMS", "MS", "R", "S"]  # Replace with your class labels
+        predicted_class = class_names[np.argmax(predictions)]
+        confidence = np.max(predictions) * 100
 
-    # Severity Level
-    severity = "High" if confidence > 80 else "Moderate" if confidence > 50 else "Low"
-    st.write(f"**Severity Level:** {severity}")
+        # Display results
+        st.header("Prediction Results")
+        st.write(f"**Predicted Status:** {predicted_class}")
+        st.write(f"**Confidence Level:** {confidence:.2f}%")
 
-    # Highlighting a region (Example: bounding box)
-    st.subheader("Highlighted Regions")
-    draw = ImageDraw.Draw(image)
-    # Example bounding box coordinates, adjust as necessary
-    draw.rectangle([50, 50, 150, 150], outline="red", width=3)  # Example bounding box
-    st.image(image, caption="Highlighted Regions", use_column_width=True)
+        # Severity Level
+        severity = "High" if confidence > 80 else "Moderate" if confidence > 50 else "Low"
+        st.write(f"**Severity Level:** {severity}")
 
-    # Disease Insights
-    st.header("Disease Insights")
-    for i, class_name in enumerate(class_names):
-        st.write(f"{class_name}: {predictions[0][i] * 100:.2f}%")
+        # Highlighting a region (Example: bounding box)
+        st.subheader("Highlighted Regions")
+        draw = ImageDraw.Draw(image)
+        draw.rectangle([50, 50, 150, 150], outline="red", width=3)  # Example bounding box
+        st.image(image, caption="Highlighted Regions", use_column_width=True)
 
-    # Model Performance Metrics (Admin Only)
-    if st.checkbox("Show Model Performance Metrics (Admin Only)"):
-        st.write("**Accuracy:** 95.6%")  # Replace with actual metric
-        st.write("**Precision:** 94.7%")  # Replace with actual metric
-        st.write("**Recall:** 93.5%")  # Replace with actual metric
+        # Disease Insights
+        st.header("Disease Insights")
+        for i, class_name in enumerate(class_names):
+            st.write(f"{class_name}: {predictions[i] * 100:.2f}%")
 
-    # User Notifications
-    if severity == "High":
-        st.warning("High severity detected! Immediate action is recommended.")
+        # Model Performance Metrics (Admin Only)
+        if st.checkbox("Show Model Performance Metrics (Admin Only)"):
+            st.write("**Accuracy:** 95.6%")  # Replace with actual metric
+            st.write("**Precision:** 94.7%")  # Replace with actual metric
+            st.write("**Recall:** 93.5%")  # Replace with actual metric
+
+        # User Notifications
+        if severity == "High":
+            st.warning("High severity detected! Immediate action is recommended.")
+
+    except Exception as e:
+        st.error(f"Error during inference: {e}")
 
 # Footer
-st.sidebar.info("Powered by Streamlit and TensorFlow")
+st.sidebar.info("Powered by Streamlit and Amazon SageMaker")
+
