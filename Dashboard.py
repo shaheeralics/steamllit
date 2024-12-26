@@ -3,50 +3,7 @@ import numpy as np
 import tensorflow as tf
 from PIL import Image, ImageDraw
 
-import streamlit as st
-import gdown
-from tensorflow.keras.models import load_model
-import os
-st.set_page_config(
-    page_title="Yellow Rust Disease Classification",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
 
-# Function to download the model
-def download_model_from_drive(file_id, output_path):
-    try:
-        if not os.path.exists(output_path):
-            gdown.download(f"https://drive.google.com/uc?id={file_id}", output_path, quiet=False)
-        else:
-            st.info("Model already downloaded.")
-    except Exception as e:
-        st.error(f"Error downloading model: {e}")
-
-# Define Google Drive file ID and local model path
-file_id = "1EnokggrC6ymrSibtj2t7IHWb9QVtrehS"  # Replace with your Google Drive file ID
-model_path = "my_model.keras"
-
-# Streamlit app
-st.title("Streamlit App with Pretrained Model")
-
-# Download model from Google Drive
-st.write("Downloading model from Google Drive...")
-download_model_from_drive(file_id, model_path)
-
-# Load the model
-if os.path.exists(model_path):
-    st.write("Loading model...")
-    try:
-        model = load_model(model_path)
-        st.success("Model loaded successfully!")
-        st.write(model.summary())
-    except Exception as e:
-        st.error(f"Error loading model: {e}")
-else:
-    st.error("Model file not found.")
-
-# Add application-specific functionality here
 
 # Set page configuration
 st.set_page_config(page_title="Yellow Rust Disease Classification", layout="wide", initial_sidebar_state="expanded")
